@@ -1,0 +1,17 @@
+{
+  "n": 5000,
+  "degree": 3,
+  "g": 0.4,
+  "disorder_size": 2.0,
+  "disorder": "Uniform",
+  "orientation": "Random edge directions",
+  "seed": 42,
+  "solver": "Near target (sparse)",
+  "eigenpairs": 80,
+  "target_real": 0.0,
+  "target_imag": 0.2,
+  "tolerance": 1e-9,
+  "max_iterations": 10000,
+  "threads": 4,
+  "save_eigenvectors": false
+}

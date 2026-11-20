@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hatano–Nelson spectra and eigenvector localization on random regular graphs. Runs locally in your browser.">
+  <title>Hatano–Nelson on regular graphs</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./assets/plotly.min.js"></script>
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+<header>
+  <h1>Hatano–Nelson on random regular graphs</h1>
+  <p>Complex spectra and statistics of ℓ²-normalized right eigenvectors.</p>
+</header>
+<div class="workspace">
+  <aside>
+    <form id="parameters">
+      <fieldset><legend>Model</legend>
+        <div class="field-pair">
+          <label>Graph size N<input id="n" name="n" type="number" value="400" min="1" step="1" required></label>
+          <label>Degree κ<input id="degree" name="degree" type="number" value="3" min="0" step="1" required></label>
+          <label>Nonreciprocity g<input id="g" name="g" type="number" value="0.4" step="any" required></label>
+          <label>Disorder size W<input id="disorder_size" name="disorder_size" type="number" value="2" min="0" step="any" required></label>
+        </div>
+        <label>Disorder law<select id="disorder" name="disorder"><option>Uniform</option><option>Gaussian</option><option>Cauchy</option><option>Rademacher</option></select></label>
+        <p id="disorder-note" class="note"></p>
+        <label>Hopping convention<select id="orientation" name="orientation"><option>Random edge directions</option><option>Root-distance gauge</option></select></label>
+        <p id="orientation-note" class="note"></p>
+        <label>Random seed<input id="seed" name="seed" type="number" value="42" min="0" step="1" required></label>
+      </fieldset>
+      <fieldset><legend>Solver</legend>
+        <label>Eigenvalue selection<select id="solver" name="solver"><option>Full spectrum (dense)</option><option>Near target (sparse)</option><option>Largest magnitude (sparse)</option></select></label>
+        <div id="sparse-controls" hidden>
+          <label>Number of eigenpairs<input id="eigenpairs" name="eigenpairs" type="number" value="40" min="1" step="1"></label>
+          <div id="target-controls" class="field-pair">
+            <label>Target Re z<input id="target_real" name="target_real" type="number" value="0" step="any"></label>
+            <label>Target Im z<input id="target_imag" name="target_imag" type="number" value="0.2" step="any"></label>
+          </div>
+        </div>
+        <p id="memory-note" class="note"></p>
+        <details><summary>Numerical options</summary>
+          <label>Sparse tolerance<input id="tolerance" name="tolerance" type="number" value="1e-9" min="1e-14" max="0.1" step="any"></label>
+          <label>Maximum sparse iterations<input id="max_iterations" name="max_iterations" type="number" value="10000" min="1" step="1"></label>
+          <label class="checkbox"><input id="save_eigenvectors" name="save_eigenvectors" type="checkbox">Keep eigenvectors for download</label>
+          <p class="note">Requires extra browser memory until downloaded or the runtime is released.</p>
+        </details>
+      </fieldset>
+      <div class="actions"><button id="run" type="submit" class="primary">Run simulation</button><button id="cancel" type="button" disabled>Cancel</button></div>
+    </form>
+    <p class="note">Calculations run on your device in a separate browser worker. The first run downloads Python and its numerical libraries. Keep this tab open for long calculations.</p>
+    <button id="example" type="button">Load N = 1,000 example</button>
+    <label class="import-label">Import saved JSON or desktop CSV<input id="import" type="file" accept=".json,.csv,application/json,text/csv"></label>
+  </aside>
+  <main>
+    <section id="status" role="status" aria-live="polite"><span id="status-message">Ready. Choose parameters or load the included example.</span><span id="elapsed"></span></section>
+    <progress id="progress" value="0" max="1" hidden></progress>
+    <p id="error" class="error" role="alert" hidden></p>
+    <section id="results" hidden>
+      <h2>Displayed run</h2><p id="run-summary"></p><p id="selection-note" class="notice" hidden></p>
+      <div class="plot-controls">
+        <label>Spectral coordinates<select id="coordinates"><option value="complex">Complex plane ℂ</option><option value="auto">Automatic (real line for real spectra)</option></select></label>
+        <label>Eigenvector statistic<select id="metric"><option value="ipr">Inverse participation ratio</option><option value="l4">L⁴ norm</option><option value="linf">L∞ norm</option></select></label>
+        <label>Localization view<select id="view"><option value="binned">Binned mean</option><option value="scatter">Individual eigenvalues</option></select></label>
+        <label>Bins per axis<input id="bins" type="number" value="60" min="10" max="400" step="1"></label>
+      </div>
+      <details><summary>Plot range and binning</summary><div class="plot-controls">
+        <label>Central percentile range per axis (%)<input id="central" type="number" value="100" min="1" max="100" step="any"></label>
+        <label>Minimum localization-bin count<input id="minimum" type="number" value="1" min="1" step="1"></label>
+      </div><p class="note">Clipping changes the view, without changing the exported data or density normalization. Changing plot controls does not repeat the eigensolve.</p></details>
+      <div class="plot-scroll"><div id="spectrum-plot" aria-label="Spectral distribution and eigenvector statistics"></div></div>
+      <p id="plot-note" class="note"></p><p id="solver-notes" class="note"></p>
+      <details><summary>Downloads and numerical details</summary>
+        <div class="actions downloads">
+          <button id="download-json" type="button">Saved run (JSON)</button><button id="download-csv" type="button">Eigenvalues + metrics (CSV)</button><button id="download-png" type="button">Current plot (PNG)</button>
+          <button id="download-metrics" type="button">Metrics (NPZ)</button><button id="download-matrix" type="button">Hamiltonian (NPZ)</button><button id="download-graph" type="button">Graph + disorder (NPZ)</button><button id="download-vectors" type="button">Eigenvectors (NPY)</button>
+          <button id="release" type="button">Release numerical runtime</button>
+        </div>
+        <p class="note">JSON and CSV downloads retain the plotted data. Binary exports require the most recent simulation to remain in the worker. Releasing the runtime frees its memory; the plots and JSON/CSV remain available. Downloads are saved by your browser.</p>
+        <pre id="metadata"></pre>
+      </details>
+    </section>
+    <section id="empty"><p>The default view is the complex plane: Re λ horizontally and Im λ vertically. Numerically real eigenvalues appear along Im λ = 0.</p><p>For large graphs, sparse modes select part of the spectrum. You can also compute with the desktop Python app and import its eigenvalues.csv here.</p></section>
+    <details class="definitions"><summary>Model, normalization, and browser limits</summary>
+      <p>κ is the actual degree. The graph is simple, with Nκ even, and hopping is unnormalized. On a preferred edge u → v, H<sub>vu</sub> = e<sup>g</sup> and H<sub>uv</sub> = e<sup>−g</sup>; H<sub>xx</sub> = V<sub>x</sub>. Preferred directions are independent by default.</p>
+      <p>Root-distance gauge uses H = D(A + diag V)D<sup>−1</sup>, D<sub>xx</sub> = exp(gh<sub>x</sub>). Its finite spectrum is real and independent of g. Same-shell hopping is 1.</p>
+      <p>For ∥v∥₂ = 1: IPR = ∑<sub>x</sub>|v<sub>x</sub>|⁴, ∥v∥₄ = IPR<sup>1/4</sup>, and ∥v∥∞ = max<sub>x</sub>|v<sub>x</sub>|. The L⁴ norm and IPR therefore encode the same individual-vector statistic. Statistics in a degenerate eigenspace depend on the chosen eigenbasis.</p>
+      <p>Heat maps give arithmetic means in occupied bins. IPR, L⁴ and L∞ always use a fixed linear color scale from 0 to 1, with raw values and no rescaling between runs. Histograms are normalized by the total number of computed eigenvalues and bin area (bin width in the real-line view). Empty bins are blank. Sparse and imported CSV results describe the selected or supplied eigenvalues.</p>
+      <p>The browser runs single-worker Python via Pyodide 0.28.3, NumPy, SciPy, and NetworkX. Full diagonalization costs O(N³) time and O(N²) memory. Sparse LU can also need substantial memory. This runtime uses wasm32, with at most 4 GiB of linear memory and potentially lower limits in a browser. Downloads and plots use additional memory. Use the desktop app for runs beyond the browser's capacity.</p>
+      <p>A small relative eigenpair residual verifies Hv ≈ λv, without bounding nonnormal eigenvalue sensitivity. The app uses double precision. Download your results before closing or reloading the tab. Numerical data stay in your browser; runtime files are downloaded from jsDelivr. Plotly.js is included locally.</p>
+    </details>
+    <noscript>This app requires JavaScript and a browser with WebAssembly support.</noscript>
+  </main>
+</div>
+</body>
+</html>

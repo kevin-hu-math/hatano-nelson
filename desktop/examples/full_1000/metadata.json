@@ -1,0 +1,37 @@
+{
+  "config": {
+    "n": 1000,
+    "degree": 3,
+    "g": 0.6,
+    "disorder_size": 2.0,
+    "disorder": "Uniform",
+    "orientation": "Random edge directions",
+    "seed": 42,
+    "solver": "Full spectrum (dense)",
+    "eigenpairs": 80,
+    "target_real": 0.0,
+    "target_imag": 0.0,
+    "tolerance": 1e-09,
+    "max_iterations": 10000,
+    "threads": 4,
+    "save_eigenvectors": false
+  },
+  "computed_eigenvalues": 1000,
+  "full_spectrum": true,
+  "graph_edges": 1500,
+  "graph_components": 1,
+  "largest_residual": 5.106683921245262e-16,
+  "residual_definition": "||Hv-\u03bbv||\u2082 / ((||H||_F+|\u03bb|)||v||\u2082)",
+  "solver_reference": "non-Hermitian matrix",
+  "notes": [],
+  "converged": true,
+  "schema_version": 1,
+  "elapsed_seconds": 0.9598290280009678,
+  "finished_utc": "2026-11-19T17:00:17.493112+00:00",
+  "versions": {
+    "python": "3.12.14",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "networkx": "3.7"
+  }
+}

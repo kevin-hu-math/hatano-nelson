@@ -1,0 +1,9 @@
+{
+  "name": "hatano-nelson-pages",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Static GitHub Pages app; Node is needed only for developer tests.",
+  "scripts": {"test": "node --test tests/*.test.mjs", "test:wasm": "node tests/wasm-smoke.mjs", "test:worker": "node tests/worker-smoke.mjs"},
+  "devDependencies": {"jsdom": "26.1.0", "pyodide": "0.28.3"}
+}
